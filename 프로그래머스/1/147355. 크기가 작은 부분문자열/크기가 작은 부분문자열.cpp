@@ -21,3 +21,19 @@ int solution(string t, string p) {
     
     return answer;
 }
+
+// substr을 사용해보자!
+// int solution(std::string t, std::string p) {
+//     int answer = 0;
+//     int len = p.size();
+    
+//     for (int i = 0; i <= t.size() - len; i++) {
+//         std::string sub = t.substr(i, len);
+        
+//         if (sub <= p) {  // 문자열 비교 (길이가 같으면 숫자 비교와 동일)
+//             answer++;
+//         }
+//     }
+    
+//     return answer;
+// }
