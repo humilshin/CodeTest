@@ -1,118 +1,67 @@
 #include <iostream>
-#include <vector>
-#include <string>
-#include <cstdio>
 #include <queue>
-
+#include <cstring>
 using namespace std;
 
-vector<vector<char>> map;
-vector<vector<int>> dist_map;
-int max_r, max_c;
+const int MAX = 1001;
+char grid[MAX][MAX];
+int fdist[MAX][MAX];
+int pdist[MAX][MAX];
+int R, C;
+int dr[] = {1, -1, 0, 0};
+int dc[] = {0, 0, 1, -1};
 
-#ifdef REDIRECT_IO
-void input_redirection() {
-	freopen("input.txt", "r", stdin);
-	freopen("output.txt", "w", stdout);
-}
-#endif
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
 
-int dx[4] = {1, -1, 0, 0};
-int dy[4] = {0, 0, 1, -1};
+    cin >> R >> C;
+    memset(fdist, -1, sizeof(fdist));
+    memset(pdist, -1, sizeof(pdist));
 
-int BFS(const vector<pair<int,int>>& fstart , int prow, int pcol) {
-	queue<pair<int,int>> fq;
-	queue<pair<int,int>> pq;
-	for (const auto & entry : fstart)
-		fq.push(entry);
+    queue<pair<int,int>> fq, pq;
 
-	dist_map[prow][pcol] = 0;
-	pq.push({prow, pcol});
+    for (int i = 0; i < R; i++) {
+        cin >> grid[i];
+        for (int j = 0; j < C; j++) {
+            if (grid[i][j] == 'F') {
+                fdist[i][j] = 0;
+                fq.push({i, j});
+            }
+            if (grid[i][j] == 'J') {
+                pdist[i][j] = 0;
+                pq.push({i, j});
+            }
+        }
+    }
 
-	while (!pq.empty()) {
-		int f_size = fq.size();
-		while (f_size--) {
-			int temp_frow = fq.front().first;
-			int temp_fcol = fq.front().second;
-			fq.pop();
+    while (!fq.empty()) {
+        auto [r, c] = fq.front(); fq.pop();
+        for (int i = 0; i < 4; i++) {
+            int nr = r + dr[i], nc = c + dc[i];
+            if (nr < 0 || nr >= R || nc < 0 || nc >= C) continue;
+            if (grid[nr][nc] == '#' || fdist[nr][nc] != -1) continue;
+            fdist[nr][nc] = fdist[r][c] + 1;
+            fq.push({nr, nc});
+        }
+    }
 
-			for (int i = 0; i < 4; i++)
-			{
-				if (temp_frow + dx[i] >= 0 && temp_frow + dx[i] < max_r && temp_fcol + dy[i] >= 0 && temp_fcol + dy[i] < max_c)
-				{
-					if (map[temp_frow + dx[i]][temp_fcol + dy[i]] == '.' || map[temp_frow + dx[i]][temp_fcol + dy[i]] == 'J')
-					{
-						map[temp_frow + dx[i]][temp_fcol + dy[i]] = 'F';
-						fq.push({temp_frow + dx[i], temp_fcol + dy[i]});
-					}
-				}
-			}
-		}
+    while (!pq.empty()) {
+        auto [r, c] = pq.front(); pq.pop();
+        if (r == 0 || r == R-1 || c == 0 || c == C-1) {
+            cout << pdist[r][c] + 1;
+            return 0;
+        }
+        for (int i = 0; i < 4; i++) {
+            int nr = r + dr[i], nc = c + dc[i];
+            if (nr < 0 || nr >= R || nc < 0 || nc >= C) continue;
+            if (grid[nr][nc] == '#' || pdist[nr][nc] != -1) continue;
+            if (fdist[nr][nc] != -1 && pdist[r][c] + 1 >= fdist[nr][nc]) continue;
+            pdist[nr][nc] = pdist[r][c] + 1;
+            pq.push({nr, nc});
+        }
+    }
 
-		int p_size = pq.size();
-		while (p_size--) {
-			int temp_prow = pq.front().first;
-			int temp_pcol = pq.front().second;
-			pq.pop();
-
-			//탈출 조건
-			if (temp_prow == 0 || temp_prow == max_r - 1 || temp_pcol == 0 || temp_pcol == max_c - 1)
-			{
-				return dist_map[temp_prow][temp_pcol] + 1;
-			}
-
-			for (int i = 0; i < 4; i++) {
-				if (temp_prow + dx[i] >= 0 && temp_prow + dx[i] < max_r && temp_pcol + dy[i] >= 0 && temp_pcol + dy[i] < max_c)
-				{
-					if (map[temp_prow + dx[i]][temp_pcol + dy[i]] == '.' && !dist_map[temp_prow + dx[i]][temp_pcol + dy[i]])
-					{
-						dist_map[temp_prow + dx[i]][temp_pcol + dy[i]] = dist_map[temp_prow][temp_pcol] + 1;
-						pq.push({temp_prow + dx[i], temp_pcol + dy[i]});
-					}
-				}
-			}
-		}
-
-	}
-	return -1;
-}
-
-int main()
-{
-#ifdef REDIRECT_IO
-	input_redirection();
-#endif
-
-	cin >> max_r >> max_c;
-	map.assign(max_r, vector<char>(max_c));
-	dist_map.assign(max_r, vector<int>(max_c));
-
-	int r,c;
-	vector<pair<int, int>> fstart;
-
-	for (int i = 0; i < max_r; i++)
-	{
-		for (int j = 0; j < max_c; j++)
-		{
-			cin >> map[i][j];
-			if (map[i][j] == 'F')
-				fstart.push_back({i,j});
-			if (map[i][j] == 'J')
-				{
-					r = i;
-					c = j;
-				}
-
-		}
-	}
-
-	int answer = BFS(fstart, r, c);
-	if (answer == -1) {
-		cout << "IMPOSSIBLE";
-	}
-	else {
-		cout << answer; 
-	}
-
-	return 0;
+    cout << "IMPOSSIBLE";
+    return 0;
 }
